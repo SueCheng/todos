@@ -5,17 +5,23 @@ import { Provider } from 'react-redux';
 import thunk from 'redux-thunk';
 import { TodoList } from './todoList';
 import { reducers } from './reducers';
-
-const store = createStore(reducers, applyMiddleware(thunk));
+import uniqueId from './utilities/uniqueId';
 
 const initialTodo = {
-  id: 0,
+  id: uniqueId(),
   title: 'Hello World',
   completed: false
 };
+
+const store = createStore(
+  reducers,
+  { todoList: [initialTodo] },
+  applyMiddleware(thunk)
+);
+
 const OriginalApp = () => (
   <Provider store={store}>
-    <TodoList initialTodo={initialTodo} />
+    <TodoList />
   </Provider>
 );
 

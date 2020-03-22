@@ -5,6 +5,131 @@ import { ProgressPlugin } from 'webpack';
 import { connect } from 'react-redux';
 import { StoreState } from './reducers';
 import { Todo, addTodo, deleteTodo, fetchTodos } from './actions';
+import { space, layout, color } from 'styled-system';
+import { ThemeProvider } from 'emotion-theming';
+import { ThemeProps, theme } from './theme';
+import uniqueId from './utilities/uniqueId';
+
+const green = 'green';
+const BlockLable = styled.label({
+  display: 'block'
+});
+const GreenBorderInput = styled.input({
+  border: `1px solid ${green}`
+});
+const RedBorderButton = styled.button({
+  border: `1px solid red`
+});
+const RedBorderBlockButton = BlockLable.withComponent(RedBorderButton);
+
+interface TodoListProps {
+  todoList: Todo[];
+  addTodo: Function;
+  deleteTodo: Function;
+  fetchTodos: Function;
+  maximumListAmount?: number; // for using default props purpose, didn't make it really work
+}
+type BoxProps = {
+  theme: ThemeProps;
+};
+
+const Box = styled.div(
+  {
+    boxSizing: 'border-box'
+  },
+  space,
+  layout,
+  color
+);
+
+const _TodoList: React.FunctionComponent<TodoListProps> = ({
+  todoList,
+  addTodo,
+  deleteTodo,
+  fetchTodos,
+  maximumListAmount = 12,
+  children
+}) => {
+  const [newTodo, setNewTodo] = React.useState<Todo>({
+    id: -1,
+    title: '',
+    completed: false
+  });
+
+  const onChangeTodoTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.value;
+    setNewTodo({ ...newTodo, title: newValue });
+  };
+
+  const onChangeTodoCompleted = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const newValue = e.target.checked;
+    setNewTodo({ ...newTodo, completed: newValue });
+  };
+
+  const onAddTodo = () => {
+    addTodo({ ...newTodo, id: uniqueId() });
+    setNewTodo({ id: -1, title: '', completed: false });
+  };
+
+  const onDeleteTodo = (id: number) => {
+    deleteTodo(id);
+  };
+
+  const renderList = () => {
+    if (todoList.length === 0) return null;
+    return todoList.map(todo => (
+      <li key={todo.id}>
+        {todo.title}{' '}
+        <span>{todo.completed ? 'Completed' : 'Not Completed'}</span>
+        <RedBorderBlockButton onClick={() => onDeleteTodo(todo.id)}>
+          delete
+        </RedBorderBlockButton>
+      </li>
+    ));
+  };
+
+  return (
+    <ThemeProvider theme={theme}>
+      <Box color="black" bg="green" mb={[0, 3, 5]} width={[1, 1 / 2, 1 / 4]}>
+        {maximumListAmount}
+      </Box>
+      <RedBorderBlockButton onClick={() => fetchTodos()}>
+        Fetch
+      </RedBorderBlockButton>
+      <BlockLable htmlFor="title">
+        Please input new todo Title:
+        <GreenBorderInput
+          id="title"
+          type="text"
+          placeholder={'todo title here'}
+          onChange={onChangeTodoTitle}
+          value={newTodo.title}
+        />
+      </BlockLable>
+      <BlockLable htmlFor="completed">
+        Please input new todo Completed:
+        <GreenBorderInput
+          id="completed"
+          type="radio"
+          onChange={onChangeTodoCompleted}
+          checked={newTodo.completed}
+        />
+        Completed
+      </BlockLable>
+      <RedBorderButton onClick={onAddTodo}>Add New Note</RedBorderButton>
+      <br />
+      <ul>{renderList()}</ul>
+    </ThemeProvider>
+  );
+};
+const mapStateToProps = ({ todoList }: StoreState): { todoList: Todo[] } => {
+  return { todoList };
+};
+export const TodoList = connect(mapStateToProps, {
+  addTodo,
+  deleteTodo,
+  fetchTodos
+})(_TodoList);
 
 // const color = 'white';
 // const titleStyle = css({
@@ -100,122 +225,6 @@ import { Todo, addTodo, deleteTodo, fetchTodos } from './actions';
 //     />
 //   </React.Fragment>
 // );
-const green = 'green';
-const BlockLable = styled.label({
-  display: 'block'
-});
-const GreenBorderInput = styled.input({
-  border: `1px solid ${green}`
-});
-const RedBorderButton = styled.button({
-  border: `1px solid red`
-});
-const RedBorderBlockButton = BlockLable.withComponent(RedBorderButton);
-
-interface TodoListProps {
-  todoList: Todo[];
-  addTodo: Function;
-  deleteTodo: Function;
-  fetchTodos: Function;
-  maximumListAmount?: number; // for using default props purpose, didn't make it really work
-  initialTodo: Todo;
-}
-
-// type StateType = {
-//   todoList: Todo[];
-// };
-
-const _TodoList: React.FunctionComponent<TodoListProps> = ({
-  todoList,
-  addTodo,
-  deleteTodo,
-  fetchTodos,
-  maximumListAmount = 12,
-  initialTodo,
-  children
-}) => {
-  //   const [state, dispatch] = React.useReducer(reducer, {
-  //     todoList: [initialTodo]
-  //   });
-
-  const [newTodo, setNewTodo] = React.useState<Todo>({
-    id: -1,
-    title: '',
-    completed: false
-  });
-
-  const onChangeTodoTitle = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.value;
-    setNewTodo({ ...newTodo, title: newValue });
-  };
-
-  const onChangeTodoCompleted = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const newValue = e.target.checked;
-    setNewTodo({ ...newTodo, completed: newValue });
-  };
-
-  const onAddTodo = () => {
-    addTodo({ ...newTodo, id: todoList.length });
-    setNewTodo({ id: -1, title: '', completed: false });
-  };
-
-  const onDeleteTodo = (id: number) => {
-    deleteTodo(id);
-  };
-
-  const renderList = () => {
-    if (todoList.length === 0) return null;
-    return todoList.map(todo => (
-      <li key={todo.id}>
-        {todo.title}{' '}
-        <span>{todo.completed ? 'Completed' : 'Not Completed'}</span>
-        <RedBorderBlockButton onClick={() => onDeleteTodo(todo.id)}>
-          delete
-        </RedBorderBlockButton>
-      </li>
-    ));
-  };
-
-  return (
-    <>
-      <div>{maximumListAmount}</div>
-      <RedBorderBlockButton onClick={() => fetchTodos()}>
-        Fetch
-      </RedBorderBlockButton>
-      <BlockLable htmlFor="title">
-        Please input new todo Title:
-        <GreenBorderInput
-          id="title"
-          type="text"
-          placeholder={'todo title here'}
-          onChange={onChangeTodoTitle}
-          value={newTodo.title}
-        />
-      </BlockLable>
-      <BlockLable htmlFor="completed">
-        Please input new todo Completed:
-        <GreenBorderInput
-          id="completed"
-          type="radio"
-          onChange={onChangeTodoCompleted}
-          checked={newTodo.completed}
-        />
-        Completed
-      </BlockLable>
-      <RedBorderButton onClick={onAddTodo}>Add New Note</RedBorderButton>
-      <br />
-      <ul>{renderList()}</ul>
-    </>
-  );
-};
-const mapStateToProps = ({ todoList }: StoreState): { todoList: Todo[] } => {
-  return { todoList };
-};
-export const TodoList = connect(mapStateToProps, {
-  addTodo,
-  deleteTodo,
-  fetchTodos
-})(_TodoList);
 
 // interface TodoListState {
 //     todoList: Todo[];
